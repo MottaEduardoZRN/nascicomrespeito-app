@@ -33,15 +33,20 @@ jobs:
           echo '<!DOCTYPE html><html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"></head><body style="background:#fdf8f5;"></body></html>' > dist/index.html
           node -e 'fs.writeFileSync("capacitor.config.json", JSON.stringify({appId:"com.nascicomrespeito.app",appName:process.env.NOME_DO_APP,webDir:"dist",server:{url:process.env.URL_DO_PROJETO,cleartext:true}}, null, 2))'
 
-      - - name: 4. Instalar Capacitor, criar pasta Android e aplicar icone
+      - name: 4. Instalar Capacitor, criar pasta Android e aplicar icone
         run: |
-          npm install @capacitor/core@7 @capacitor/cli@7 @capacitor/android@7 @capacitor/assets
+          npm install @capacitor/core@7 @capacitor/cli@7 @capacitor/android@7 @capacitor/assets sharp
           npx cap add android
           if [ -f "icon.png" ]; then
             mkdir -p assets
-            cp icon.png assets/icon-only.png
-            cp icon.png assets/icon-foreground.png
-            cp icon.png assets/splash.png
+            node -e '
+              const sharp = require("sharp");
+              (async () => {
+                await sharp("icon.png").resize(1024, 1024, { fit: "contain", background: "#fdf8f5" }).png().toFile("assets/icon-only.png");
+                await sharp("icon.png").resize(1024, 1024, { fit: "contain", background: "#fdf8f5" }).png().toFile("assets/icon-foreground.png");
+                await sharp("icon.png").resize(2732, 2732, { fit: "contain", background: "#fdf8f5" }).png().toFile("assets/splash.png");
+              })();
+            '
             npx capacitor-assets generate --android --iconBackgroundColor '#fdf8f5' --splashBackgroundColor '#fdf8f5'
           fi
           npx cap sync android
